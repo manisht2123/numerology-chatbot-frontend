@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Numerology Chatbot</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    
+    .chatbot-container {
+      width: 350px;
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-header {
+      background-color: #FFC107;
+      padding: 15px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+    
+    .message {
+      margin-bottom: 15px;
+      display: flex;
+    }
+    
+    .message.user .message-content {
+      background-color: #DCF8C6;
+      align-self: flex-end;
+      border-radius: 15px 15px 0 15px;
+    }
+    
+    .message.bot .message-content {
+      background-color: #ffffff;
+      align-self: flex-start;
+      border-radius: 15px 15px 15px 0;
+    }
+    
+    .message-content {
+      padding: 10px 15px;
+      max-width: 80%;
+      font-size: 14px;
+    }
+    
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      background-color: #ffffff;
+    }
+    
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    
+    .chat-input button {
+      background-color: #FFC107;
+      border: none;
+      color: #ffffff;
+      padding: 10px 15px;
+      border-radius: 50%;
+      margin-left: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 400px) {
+      .chatbot-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chatbot-container">
+    <div class="chat-header">
+      Numerology Chatbot
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="message bot">
+        <div class="message-content">Hello! I'm your Numerology Assistant. Ask me anything about numerology!</div>
+      </div>
+    </div>
+    <form class="chat-input" id="chat-form">
+      <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off" required>
+      <button type="submit">&#8594;</button>
+    </form>
+  </div>
+  
+  <!-- Scripts -->
+  <script>
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const chatMessages = document.getElementById('chat-messages');
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      if (message === '') return;
+
+      appendMessage('user', message);
+      userInput.value = '';
+      
+      // Show loading spinner
+      const loadingMessage = document.createElement('div');
+      loadingMessage.classList.add('message', 'bot');
+      loadingMessage.innerHTML = '<div class="message-content">Thinking...</div>';
+      chatMessages.appendChild(loadingMessage);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Send message to backend
+      try {
+        const response = await fetch('https://numerology-chatbot-backend.vercel.app/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message }),
+        });
+
+        const data = await response.json();
+        if (data.reply) {
+          // Remove loading spinner
+          chatMessages.removeChild(loadingMessage);
+          appendMessage('bot', data.reply);
+        } else {
+          chatMessages.removeChild(loadingMessage);
+          appendMessage('bot', 'Sorry, I could not process your request.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        chatMessages.removeChild(loadingMessage);
+        appendMessage('bot', 'Sorry, something went wrong. Please try again later.');
+      }
+    });
+
+    function appendMessage(sender, text) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', sender);
+      messageElement.innerHTML = `<div class="message-content">${text}</div>`;
+      chatMessages.appendChild(messageElement);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  </script>
+</body>
+</html>
